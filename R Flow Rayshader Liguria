@@ -1,0 +1,51 @@
+library(leaflet)
+library(rayshader)
+library(rayrender)
+library(readr, ggplot2)
+library(tidyr)
+library(terra)
+library(raster)
+#load zip file for italy DEM
+loadzip = tempfile() 
+tif_file_path <- "C:/Users/Elain/OneDrive/Documents/Paradiso_Montalto/DEM_Liguria/w48540_s10/w48540_s10.tif"
+tif_file_path <- "C:/Users/Elain/OneDrive/Documents/Paradiso_Montalto/DEM_Liguria/w48540_s10.tif"
+
+can_find_file <- file.exists(tif_file_path)
+print(paste("Can R find the file? ", can_find_file))
+
+
+localtif <- rast(tif_file_path) 
+
+
+#And convert it to a matrix:
+elmat = raster_to_matrix(localtif)
+
+#We use another one of rayshader's built-in textures:
+elmat %>%
+  sphere_shade(texture = "desert") %>%
+  plot_map()
+#sphere_shade can shift the sun direction:
+elmat %>%
+  sphere_shade(sunangle = 45, texture = "desert") %>%
+  plot_map()
+#detect_water and add_water adds a water layer to the map:
+elmat %>%
+  sphere_shade(texture = "imhof1") %>%
+  add_water(detect_water(elmat), color = "imhof1") %>%
+  plot_map()
+#And we can add a raytraced layer from that sun direction as well:
+elmat %>%
+  sphere_shade(texture = "desert") %>%
+  add_water(detect_water(elmat), color = "desert") %>%
+  add_shadow(ray_shade(elmat), 0.5) %>%
+  plot_map()
+
+#3D mapping based on textures
+elmat %>%
+  sphere_shade(texture = "imhof1") %>%
+
+  add_water(detect_water(elmat), color = "imhof1") %>%
+  add_shadow(ray_shade(elmat, zscale = 3), 0.5) %>%
+  add_shadow(ambient_shade(elmat), 0) %>%
+  plot_3d(elmat, zscale = 10, fov = 0, theta = 135, zoom = 0.75, phi = 45, windowsize = c(1000, 800))
+Sys.sleep(0.2)
